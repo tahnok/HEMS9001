@@ -1,0 +1,6 @@
+[package]
+name = "HEMS9001"
+version = "0.1.0"
+authors = ["Wesley Ellis <tahnok@gmail.com>"]
+
+[dependencies]
