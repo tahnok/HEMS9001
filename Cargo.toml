@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Wesley Ellis <tahnok@gmail.com>"]
 
 [dependencies]
+glob = "0.2"
