@@ -2,11 +2,10 @@ extern crate glob;
 
 use glob::glob;
 
-use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
-use std::process;
+use std::{env, process, thread, time};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -15,16 +14,21 @@ fn main() {
         process::exit(12);
     }
     
-    let file_path = find_file(&args[1]).expect("unable to find file for 1w sensor");
-    let mut file = File::open(file_path).expect("unable to open 1w sensor");
-	let mut contents = String::new();
+    let ten_seconds = time::Duration::from_secs(10);
 
-	let read = file.read_to_string(&mut contents);
-    read.expect("can't read file to string");
+    loop {
+        let file_path = find_file(&args[1]).expect("unable to find file for 1w sensor");
+        let mut file = File::open(file_path).expect("unable to open 1w sensor");
+        let mut contents = String::new();
 
-    match parse_temperature(&contents) {
-        Some(temp) => println!("temp is {}", temp / 1000),
-        None => println!("sensor not ready")
+        let read = file.read_to_string(&mut contents);
+        read.expect("can't read file to string");
+
+        match parse_temperature(&contents) {
+            Some(temp) => println!("temp is {}", temp / 1000),
+            None => println!("sensor not ready")
+        }
+        thread::sleep(ten_seconds);
     }
 
 }
