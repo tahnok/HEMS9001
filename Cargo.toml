@@ -5,3 +5,5 @@ authors = ["Wesley Ellis <tahnok@gmail.com>"]
 
 [dependencies]
 glob = "0.2"
+reqwest = "0.8"
+hyper = "0.11"

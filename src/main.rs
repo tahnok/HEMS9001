@@ -1,11 +1,21 @@
 extern crate glob;
+extern crate reqwest;
+
+#[macro_use] extern crate hyper;
+header! { (XAioKey, "X-AIO-Key") => [String] }
 
 use glob::glob;
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::{env, process, thread, time};
+
+
+const USERNAME: &'static str = "tahnok42";
+const FEED_NAME: &'static str = "temperature";
+
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -25,12 +35,34 @@ fn main() {
         read.expect("can't read file to string");
 
         match parse_temperature(&contents) {
-            Some(temp) => println!("temp is {}", temp / 1000),
+            Some(temp) => {
+                println!("temp is {}", temp / 1000);
+                upload_temperature(temp);
+            },
             None => println!("sensor not ready")
         }
         thread::sleep(ten_seconds);
     }
 
+}
+
+pub fn upload_temperature(milli_celcius: i32) -> () {
+    let mut map = HashMap::new();
+    map.insert("value", format!("{}", milli_celcius));
+
+    let url = format!("https://io.adafruit.com/api/v2/{}/feeds/{}/data", USERNAME, FEED_NAME);
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .header(XAioKey("REDACTED".to_owned()))
+        .json(&map)
+        .send()
+        .expect("should be able to send");
+
+    if !response.status().is_success() {
+        println!("failed to send:");
+        println!("\t{:?}", response);
+    }
 }
 
 pub fn find_file(base_path: &str) -> Option<PathBuf> {
