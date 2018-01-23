@@ -23,6 +23,13 @@ fn main() {
         println!("need to supply path to 1wire dir as argument (try /sys/bus/w1/devices/)");
         process::exit(12);
     }
+    let key = match env::var("AIO_KEY") {
+        Ok(val) => val,
+        Err(_) => {
+            println!("need to supply AIO_KEY as environment variable (try AIO_KEY=something comand_here)");
+            process::exit(13);
+        }
+    };
     
     let ten_seconds = time::Duration::from_secs(10);
 
@@ -37,7 +44,7 @@ fn main() {
         match parse_temperature(&contents) {
             Some(temp) => {
                 println!("temp is {}", temp / 1000);
-                upload_temperature(temp);
+                upload_temperature(temp, &key);
             },
             None => println!("sensor not ready")
         }
@@ -46,15 +53,15 @@ fn main() {
 
 }
 
-pub fn upload_temperature(milli_celcius: i32) -> () {
+pub fn upload_temperature(milli_celcius: i32, key: &str) -> () {
     let mut map = HashMap::new();
-    map.insert("value", format!("{}", milli_celcius));
+    map.insert("value", format!("{}", milli_celcius / 1000));
 
     let url = format!("https://io.adafruit.com/api/v2/{}/feeds/{}/data", USERNAME, FEED_NAME);
     let client = reqwest::Client::new();
     let response = client
         .post(&url)
-        .header(XAioKey("REDACTED".to_owned()))
+        .header(XAioKey(key.to_owned()))
         .json(&map)
         .send()
         .expect("should be able to send");
