@@ -74,7 +74,7 @@ pub fn upload_temperature(milli_celcius: i32, key: &str) -> () {
 
 pub fn find_file(base_path: &str) -> Option<PathBuf> {
     //for file in glob(format!("
-    for entry in glob(&format!("{}28-*", base_path)).unwrap() {
+    for entry in glob(&format!("{}*/w1_slave", base_path)).unwrap() {
         match entry {
             Ok(path) => { return Some(path); },
             _ => ()
