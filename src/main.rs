@@ -16,10 +16,6 @@ use std::path::PathBuf;
 use std::{thread, time};
 
 
-const USERNAME: &'static str = "tahnok42";
-const FEED_NAME: &'static str = "temperature";
-
-
 fn main() {
     let matches = App::new("HEMS 9001")
                           .version("0.1")
@@ -36,11 +32,22 @@ fn main() {
                                .value_name("DIR")
                                .help("Directory to 1wire sysfs like /sys/bus/w1/devices/")
                                .default_value("/sys/bus/w1/devices/"))
+                          .arg(Arg::with_name("user")
+                               .long("user")
+                               .value_name("ADAFRUIT.IO USERNAME")
+                               .help("Adafruit.io username")
+                               .default_value("tahnok42"))
+                          .arg(Arg::with_name("feed_name")
+                               .long("feed_name")
+                               .value_name("FEED NAME")
+                               .help("Adafruit.io feedname")
+                               .default_value("temperature"))
                           .get_matches();
 
     let key = matches.value_of("aio-key").unwrap();
     let path = matches.value_of("1wire").unwrap();
-
+    let user = matches.value_of("user").unwrap();
+    let feed_name = matches.value_of("feed_name").unwrap();
     
     let ten_seconds = time::Duration::from_secs(10);
 
@@ -55,7 +62,7 @@ fn main() {
         match parse_temperature(&contents) {
             Some(temp) => {
                 println!("temp is {}", temp / 1000);
-                upload_temperature(temp, &key);
+                upload_temperature(temp, &user, &key, &feed_name);
             },
             None => println!("sensor not ready")
         }
@@ -64,11 +71,11 @@ fn main() {
 
 }
 
-pub fn upload_temperature(milli_celcius: i32, key: &str) -> () {
+pub fn upload_temperature(milli_celcius: i32, user: &str, key: &str, feed_name: &str) -> () {
     let mut map = HashMap::new();
     map.insert("value", format!("{}", milli_celcius / 1000));
 
-    let url = format!("https://io.adafruit.com/api/v2/{}/feeds/{}/data", USERNAME, FEED_NAME);
+    let url = format!("https://io.adafruit.com/api/v2/{}/feeds/{}/data", user, feed_name);
     let client = reqwest::Client::new();
     let response = client
         .post(&url)
