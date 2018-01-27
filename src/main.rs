@@ -1,8 +1,11 @@
+extern crate clap;
 extern crate glob;
 extern crate reqwest;
 
 #[macro_use] extern crate hyper;
 header! { (XAioKey, "X-AIO-Key") => [String] }
+
+use clap::{Arg, App};
 
 use glob::glob;
 
@@ -10,7 +13,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
-use std::{env, process, thread, time};
+use std::{thread, time};
 
 
 const USERNAME: &'static str = "tahnok42";
@@ -18,23 +21,31 @@ const FEED_NAME: &'static str = "temperature";
 
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        println!("need to supply path to 1wire dir as argument (try /sys/bus/w1/devices/)");
-        process::exit(12);
-    }
-    let key = match env::var("AIO_KEY") {
-        Ok(val) => val,
-        Err(_) => {
-            println!("need to supply AIO_KEY as environment variable (try AIO_KEY=something comand_here)");
-            process::exit(13);
-        }
-    };
+    let matches = App::new("HEMS 9001")
+                          .version("0.1")
+                          .author("Wesley Ellis<tahnok@gmail.com>")
+                          .about("Monitor Hedgehog Environment")
+                          .arg(Arg::with_name("aio-key")
+                               .long("aio-key")
+                               .value_name("KEY")
+                               .help("Adafruit.io KEY")
+                               .required(true)
+                               .takes_value(true))
+                          .arg(Arg::with_name("1wire")
+                               .long("1wire-dir")
+                               .value_name("DIR")
+                               .help("Directory to 1wire sysfs like /sys/bus/w1/devices/")
+                               .default_value("/sys/bus/w1/devices/"))
+                          .get_matches();
+
+    let key = matches.value_of("aio-key").unwrap();
+    let path = matches.value_of("1wire").unwrap();
+
     
     let ten_seconds = time::Duration::from_secs(10);
 
     loop {
-        let file_path = find_file(&args[1]).expect("unable to find file for 1w sensor");
+        let file_path = find_file(&path).expect("unable to find file for 1w sensor");
         let mut file = File::open(file_path).expect("unable to open 1w sensor");
         let mut contents = String::new();
 

@@ -7,3 +7,4 @@ authors = ["Wesley Ellis <tahnok@gmail.com>"]
 glob = "0.2"
 reqwest = "0.8"
 hyper = "0.11"
+clap = "2"
