@@ -61,7 +61,7 @@ fn main() {
 
         match parse_temperature(&contents) {
             Some(temp) => {
-                println!("temp is {}", temp / 1000);
+                println!("temp is {}", temp);
                 upload_temperature(temp, &user, &key, &feed_name);
             },
             None => println!("sensor not ready")
@@ -71,9 +71,9 @@ fn main() {
 
 }
 
-pub fn upload_temperature(milli_celcius: i32, user: &str, key: &str, feed_name: &str) -> () {
+pub fn upload_temperature(celcius: f32, user: &str, key: &str, feed_name: &str) -> () {
     let mut map = HashMap::new();
-    map.insert("value", format!("{}", milli_celcius / 1000));
+    map.insert("value", format!("{}", celcius));
 
     let url = format!("https://io.adafruit.com/api/v2/{}/feeds/{}/data", user, feed_name);
     let client = reqwest::Client::new();
@@ -101,7 +101,7 @@ pub fn find_file(base_path: &str) -> Option<PathBuf> {
     None
 }
 
-pub fn parse_temperature(input: &str) -> Option<i32> {
+pub fn parse_temperature(input: &str) -> Option<f32> {
     let mut lines = input.lines();
     let first = lines.next()?;
     if !first.ends_with(" YES") {
@@ -111,9 +111,10 @@ pub fn parse_temperature(input: &str) -> Option<i32> {
 
     let mut halves = second.split(" t=");
     
-    let raw_temp = halves.nth(1).unwrap_or("");
-
-    raw_temp.parse().ok()
+    match halves.nth(1).unwrap_or("").parse::<f32>() {
+        Ok(raw_temp) => Some(raw_temp / 1000.0),
+        _ => None
+    }
 }
 
 #[cfg(test)]
@@ -128,6 +129,6 @@ mod tests {
     fn can_extract_temp() {
         let valid = "4b 01 4b 7f ff 05 10 e1 : crc=e1 YES\n\
                      4b 01 4b 7f ff 05 10 e1 t=20687";
-        assert_eq!(Some(20687), super::parse_temperature(valid));
+        assert_eq!(Some(20.687), super::parse_temperature(valid));
     }
 }
