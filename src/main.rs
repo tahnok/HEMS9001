@@ -4,7 +4,6 @@ extern crate reqwest;
 
 #[macro_use] extern crate hyper;
 
-
 mod network;
 mod temperature;
 
